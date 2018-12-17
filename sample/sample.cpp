@@ -1,6 +1,8 @@
 #include "../mpistream.hpp"
 #include <mpi.h>
 
+void test();
+
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
   int rank, procs;
@@ -9,5 +11,6 @@ int main(int argc, char **argv) {
   mout.init(rank, procs);
   mout << "My rank is " << rank << " out of " << procs << " procs."
        << std::endl;
+  test();
   MPI_Finalize();
 }

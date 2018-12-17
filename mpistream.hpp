@@ -79,4 +79,4 @@ public:
 #pragma comment(lib, "msmpi.lib")
 #endif
 
-extern mpistream mout;
+__attribute__((weak)) mpistream mout;
