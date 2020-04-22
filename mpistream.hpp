@@ -1,6 +1,7 @@
 #pragma once
 #include <fstream>
 #include <iostream>
+#include <mpi.h>
 #include <sstream>
 #include <string>
 
@@ -14,64 +15,57 @@ class mpistream {
 private:
   int rank;
   int size;
-  bool initialized;
   std::ostringstream oss;
   std::ostringstream os_backup;
   std::string filename;
+  bool initialized;
 
 public:
+  bool save_to_file;  // save outputs of each rank to file
+  bool output_ifroot; // output to stdout if rank == 0
+
   mpistream(void) {
-    initialized = false;
     rank = 0;
     size = 0;
-  };
-  void init(int r, int s) {
-    rank = r;
-    size = s;
+    initialized = false;
+    save_to_file = false;
+    output_ifroot = true;
+  }
+
+  void init(void) {
+    if (initialized) return;
+    initialized = true;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
     char f[256];
     SNPRINTF(f, sizeof(f), "r%04d.out", rank);
     filename = f;
-    std::ofstream ofs(filename.c_str());
-    initialized = true;
-  }
-  template <class T> mpistream &operator<<(const T &a) {
-    if (!initialized) {
-      std::cerr << "mpistream is not initialized." << std::endl;
-      abort();
+    if (save_to_file) {
+      std::ofstream ofs(filename.c_str());
     }
+  }
+
+  template <class T>
+  mpistream &operator<<(const T &a) {
+    init();
     oss << a;
     os_backup << a;
     return *this;
   }
-  mpistream &operator<<(std::ostream &(*pf)(std::ostream &)) {
-    if (!initialized) {
-      std::cerr << "mpistream is not initialized." << std::endl;
-      abort();
-    }
 
+  mpistream &operator<<(std::ostream &(*pf)(std::ostream &)) {
+    init();
     os_backup << pf;
-    if (size == 1) {
+    if (output_ifroot && rank == 0) {
       std::cout << oss.str() << pf;
     }
-    std::ofstream ofs(filename.c_str(), std::ios_base::app);
-    ofs << oss.str() << pf;
-    oss.str("");
+    if (save_to_file) {
+      std::ofstream ofs(filename.c_str(), std::ios_base::app);
+      ofs << oss.str() << pf;
+      oss.str("");
+    }
     oss.clear();
     return *this;
-  }
-  void save_to_file(std::string filename) {
-    if (rank != 0) {
-      return;
-    }
-    std::ofstream ofs(filename.c_str());
-    ofs << os_backup.str() << std::endl;
-  }
-  void append_to_file(std::string filename) {
-    if (rank != 0) {
-      return;
-    }
-    std::ofstream ofs(filename.c_str(), std::ios_base::app);
-    ofs << os_backup.str() << std::endl;
   }
 };
 

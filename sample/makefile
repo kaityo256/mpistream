@@ -1,7 +1,7 @@
 all: a.out
 
-a.out:
-	mpic++ sample.cpp ../mpistream.cpp
+a.out: sample.cpp
+	mpic++ -Wall -Wextra sample.cpp  -I../
 
 .PHONY: clean
 clean:
