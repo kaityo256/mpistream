@@ -62,8 +62,8 @@ public:
     if (save_to_file) {
       std::ofstream ofs(filename.c_str(), std::ios_base::app);
       ofs << oss.str() << pf;
-      oss.str("");
     }
+    oss.str("");
     oss.clear();
     return *this;
   }
